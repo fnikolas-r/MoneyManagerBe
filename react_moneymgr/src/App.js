@@ -2,8 +2,7 @@
 function App() {
   return (
     <div className="App">
-      Hellow ROdl
-      Hellow ROdl
+      <h1 className="text-6xl">Hello</h1>
     </div>
   );
 }
