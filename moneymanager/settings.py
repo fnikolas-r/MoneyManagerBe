@@ -59,7 +59,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            BASE_DIR / 'templatess',
+            BASE_DIR / 'templates',
 
         ],
         'APP_DIRS': True,
@@ -132,3 +132,6 @@ STATICFILES_DIRS = [
     BASE_DIR / "templates/build/static/",
     BASE_DIR / "templates/static/",
 ]
+
+LOGIN_URL = 'login'
+LOGOUT_URL = 'logout'
