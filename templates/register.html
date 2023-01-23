@@ -1,9 +1,9 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block body %}
 {% load widget_tweaks %}
-    <div class="w-96 h-80 flex flex-col p-10 bg-white drop-shadow">
+    <div class="w-96 mt-20 flex flex-col p-10 bg-white drop-shadow">
         <div class="text-center">
-            <h2>Login</h2>
+            <h2>Register</h2>
         </div>
         <form method="post">
         {% csrf_token %}
@@ -14,9 +14,9 @@
         </div>
         {% endfor %}
         <div class="flex flex-row space-x-2 mt-4">
-            <button class="bg-stone-800 text-white p-2 rounded" type="submit">Login</button>
-                        <a href="{% url 'register' %}">
-                <button class="bg-stone-800 text-white p-2 rounded" type="button" >Register</button>
+            <button class="bg-stone-800 text-white p-2 rounded" type="submit">Register</button>
+            <a href="{% url 'login' %}">
+                <button class="bg-stone-800 text-white p-2 rounded" type="button" >Kembali Ke Login</button>
             </a>
         </div>
     </form>
