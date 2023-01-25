@@ -2,3 +2,5 @@ db.sqlite3
 /.idea/
 __pycache__/
 djangovenv/
+**/migrations/
+react_moneymgr/

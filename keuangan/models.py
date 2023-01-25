@@ -1,3 +1,5 @@
+import datetime
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.contrib.auth.models import  User
 from django.utils import timezone
@@ -23,7 +25,9 @@ class Rekening(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User,on_delete=models.CASCADE)
     is_hidden = models.BooleanField(default=False)
-    initial_deposit = models.PositiveBigIntegerField(null=False, default=0, blank=False)
+    initial_deposit = models.PositiveBigIntegerField(null=False, default=0, blank=False,validators=[
+        MinValueValidator(0)
+    ])
 
     def __str__(self):
         return self.name
@@ -31,31 +35,58 @@ class Rekening(models.Model):
 class Kategori(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=50, null=False, blank=False)
-    icon = models.TextField()
-    id_user = models.ForeignKey(User,on_delete=models.CASCADE)
+    icon = models.TextField(null=True,blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return self.name
+
+# Todo: Atur Normalisasi UtangPiutang ini
 class UtangPiutang(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    due_date = models.DateTimeField(null=False, blank=False, default=timezone.now)
+    due_date = models.DateTimeField(null=True, blank=True, default=timezone.now)
     person_in_charge = models.CharField(max_length=30, null=True,
                                         blank=True)  # Penerima atau pemberi duit, bisa orang atau organisasi
     type = models.CharField(max_length=1, null=False, choices=TIPE_UTANG_PIUTANG)
-    nominal = models.PositiveBigIntegerField(null=False, default=0)
+    tgl_transaksi = models.DateTimeField(default=datetime.datetime.now())
+    nominal = models.PositiveBigIntegerField(null=False, default=0,validators=[
+        MinValueValidator(0)
+    ])
     user = models.ForeignKey(User, models.CASCADE)
+    rekening = models.ForeignKey(Rekening,models.CASCADE,null=True)
     is_done = models.BooleanField(default=False, null=False, blank=False)
+    keterangan = models.CharField(max_length=50,null=True,blank=True)
+
+# Todo: Atur dan normalisasi data ini
+class Transfer(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    from_account = models.ForeignKey(Rekening,on_delete=models.CASCADE,related_name='from_account')
+    to_account  = models.ForeignKey(Rekening,on_delete=models.CASCADE,related_name='to_account')
+    user = models.ForeignKey(User,on_delete=models.CASCADE,null=True)
+    keterangan = models.CharField(max_length=10,null=True)
+    tgl_transfer = models.DateTimeField(null=True,default=datetime.datetime.now())
+    nominal = models.PositiveBigIntegerField(null=True,validators=[
+        MinValueValidator(0)
+    ])
+
+    def __str__(self):
+        return f"{self.from_account.name} --> {self.to_account.name} ({self.nominal})"
+
 
 class Transaksi(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     pelaku = models.CharField(max_length=30, null=True, blank=True) #Penerima atau pemberi duit, bisa orang atau organisasi
     trc_name = models.CharField(max_length=50, null=False, blank=False)
-    price = models.PositiveBigIntegerField(null=False, blank=False)
+    price = models.PositiveBigIntegerField(null=False, blank=False,validators=[
+        MinValueValidator(0)
+    ])
     rekening = models.ForeignKey(Rekening, on_delete=models.CASCADE)
     trc_type = models.IntegerField(choices=TIPE)
     trc_date = models.DateTimeField(default=timezone.now, null=False, blank=False)
     kategori = models.ForeignKey(Kategori, on_delete=models.SET_NULL, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    pelunasan_utangpiutang = models.ForeignKey(UtangPiutang, on_delete=models.CASCADE,null=True)
-    isTransfer = models.BooleanField(default=False,null=True,blank=True)
+    id_utang_piutang = models.ForeignKey(UtangPiutang, on_delete=models.CASCADE, null=True)
+    id_transfer = models.ForeignKey(Transfer,on_delete=models.CASCADE,null=True,blank=True)
 
 
     def __str__(self):
