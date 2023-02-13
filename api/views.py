@@ -1,13 +1,15 @@
 from django.db.models import  F,Sum,Q, Value
 from django.db.models.functions import  Coalesce
 from rest_framework import viewsets,response,generics,status
+from rest_framework.views import APIView
 from rest_framework.decorators import action
 from .serializer import RekeningSerializer, TransaksiSerializer,CategorySerializer, UtangPiutangSerializer,TransferSerializer
-from .auth_serializer import RegisterSerializer
+from .auth_serializer import RegisterSerializer,LoginSerializer
 from keuangan.models import Rekening, Transaksi, Kategori,UtangPiutang,Transfer
 from rest_framework.permissions import AllowAny,IsAuthenticated
 from django.contrib.auth.models import User
 from .permission import  NotTransferAndUtangPiutang
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 # Create your views here.
 class KeuanganViewSetComplex(viewsets.ModelViewSet):
@@ -101,3 +103,13 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
+
+class LoginView(TokenObtainPairView):
+    serializer_class = LoginSerializer
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+
+        return response.Response(RegisterSerializer(request.user).data,status.HTTP_200_OK)

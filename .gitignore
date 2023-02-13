@@ -4,3 +4,4 @@ __pycache__/
 djangovenv/
 **/migrations/
 react_moneymgr/
+**/.env

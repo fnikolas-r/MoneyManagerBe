@@ -48,12 +48,12 @@ class UtangPiutang(models.Model):
     person_in_charge = models.CharField(max_length=30, null=True,
                                         blank=True)  # Penerima atau pemberi duit, bisa orang atau organisasi
     type = models.CharField(max_length=1, null=False, choices=TIPE_UTANG_PIUTANG)
-    tgl_transaksi = models.DateTimeField(default=datetime.datetime.now())
+    tgl_transaksi = models.DateTimeField(default=datetime.datetime.now)
     nominal = models.PositiveBigIntegerField(null=False, default=0,validators=[
         MinValueValidator(0)
     ])
     user = models.ForeignKey(User, models.CASCADE)
-    rekening = models.ForeignKey(Rekening,models.CASCADE,null=True)
+    rekening = models.ForeignKey(Rekening,models.CASCADE)
     is_done = models.BooleanField(default=False, null=False, blank=False)
     keterangan = models.CharField(max_length=50,null=True,blank=True)
 
@@ -62,10 +62,10 @@ class Transfer(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     from_account = models.ForeignKey(Rekening,on_delete=models.CASCADE,related_name='from_account')
     to_account  = models.ForeignKey(Rekening,on_delete=models.CASCADE,related_name='to_account')
-    user = models.ForeignKey(User,on_delete=models.CASCADE,null=True)
+    user = models.ForeignKey(User,on_delete=models.CASCADE)
     keterangan = models.CharField(max_length=10,null=True)
-    tgl_transfer = models.DateTimeField(null=True,default=datetime.datetime.now())
-    nominal = models.PositiveBigIntegerField(null=True,validators=[
+    tgl_transfer = models.DateTimeField(default=datetime.datetime.now)
+    nominal = models.PositiveBigIntegerField(validators=[
         MinValueValidator(0)
     ])
 

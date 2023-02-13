@@ -12,7 +12,10 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+from environ import Env
 
+env= Env()
+env.read_env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -24,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-j!6+w9w*w(+^d$x8c9qn+o!m*!kki2ek2g0t^p2ulpr!u3l0tz'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool("DEBUG",default=True)
 
 ALLOWED_HOSTS = []
 
@@ -86,12 +89,31 @@ WSGI_APPLICATION = 'moneymanager.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
+if not DEBUG:
+    DB_DEFAULT = {
 
-DATABASES = {
-    'default': {
+    'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+    'NAME': env("DB_NAME"),
+
+    'USER': env("DB_USERNAME"),
+
+    'PASSWORD': env("DB_PASSWORD"),
+
+    'HOST': env("DB_HOST"),
+
+    'PORT': env("DB_PORT"),
+
+    }
+else:
+    DB_DEFAULT = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
+
+DATABASES = {
+    'default': DB_DEFAULT
+
 }
 
 
@@ -146,12 +168,22 @@ LOGIN_REDIRECT_URL = 'home'
 
 CORS_ALLOW_ALL_ORIGINS  = True
 
+if DEBUG:
+    DEFAULT_RENDERER_CLASSES = (
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    )
+else:
+    DEFAULT_RENDERER_CLASSES = (
+        "rest_framework.renderers.JSONRenderer",
+    )
 REST_FRAMEWORK = {
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
+    "DEFAULT_RENDERER_CLASSES":DEFAULT_RENDERER_CLASSES
 }
 
 SIMPLE_JWT = {
