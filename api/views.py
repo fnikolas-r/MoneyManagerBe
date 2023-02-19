@@ -1,9 +1,10 @@
-from django.db.models import  F,Sum,Q, Value
+from django.db.models import  F,Sum,Q, Max,Min
 from django.db.models.functions import  Coalesce
 from rest_framework import viewsets,response,generics,status
 from rest_framework.views import APIView
 from rest_framework.decorators import action
-from .serializer import RekeningSerializer, TransaksiSerializer,CategorySerializer, UtangPiutangSerializer,TransferSerializer
+from .serializer import RekeningSerializer, TransaksiSerializer,CategorySerializer, \
+    UtangPiutangSerializer,TransferSerializer,TransaksiSummarySerializer
 from .auth_serializer import RegisterSerializer,LoginSerializer
 from keuangan.models import Rekening, Transaksi, Kategori,UtangPiutang,Transfer
 from rest_framework.permissions import AllowAny,IsAuthenticated
@@ -47,15 +48,18 @@ class RekeningViewSet(KeuanganViewSetComplex):
         transaksi = TransaksiSerializer(transaksi,many=True)
         return response.Response(transaksi.data)
 
-    @action(detail=True)
-    def total(self,request,pk=None):
-        transaksi = Transaksi.objects.filter(user=self.request.user).filter(rekening__id=pk)
-        transaksi = transaksi.annotate(hasil = F('price')*F('trc_type')).aggregate(balance=Coalesce(Sum('hasil'),Value(0)))
-        rek = self.myModel.objects.get(pk=pk).initial_deposit
+    @action(detail=False)
+    def stats_summary(self,request):
 
-        return response.Response({
-            "balance":rek + transaksi["balance"]
-        },status=status.HTTP_200_OK)
+        transaksi = Transaksi.objects.filter(user=self.request.user)
+        transaksi = transaksi.annotate(hasil=F('price')*F('trc_type')).values("rekening").annotate(
+            total=Coalesce(Sum("hasil"),0),
+            name=F("rekening__name"),
+            latest_trc=Max("trc_date"),
+            first_trc=Min("trc_date")
+        )
+
+        return response.Response(TransaksiSummarySerializer(transaksi,many=True).data,status=status.HTTP_200_OK)
 
     @action(detail=True)
     def transfer_list(self,request,pk=None):
@@ -69,12 +73,19 @@ class TransaksiViewSet(KeuanganViewSetComplex):
     def __init__(self,*args,**kwargs):
         super().__init__(model=Transaksi,*args,**kwargs)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.is_protected:
+            return response.Response("Tidak Dapat Menghapus Data yang dilindungi", status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return super(TransaksiViewSet,self).destroy(request,*args,**kwargs)
+
 class TransferViewSet(KeuanganViewSetComplex):
     serializer_class = TransferSerializer
     permission_classes = [IsAuthenticated]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(model=Transfer, *args, **kwargs)
+    def __init__(self,*args,**kwargs):
+        super().__init__(model=Transfer,*args,**kwargs)
 
 class KategoriViewSet(KeuanganViewSetComplex):
     serializer_class = CategorySerializer

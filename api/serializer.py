@@ -1,5 +1,5 @@
 import datetime
-
+from rest_framework.validators import ValidationError
 from rest_framework import serializers
 from django.db.models import Sum,F,Value
 from keuangan.models import Rekening, Kategori, Transaksi, UtangPiutang, Transfer
@@ -19,20 +19,84 @@ class RekeningSerializer(serializers.ModelSerializer):
         model = Rekening
         exclude = ["user"]
 
-    def validate_name(self, value):
-        user = self.context['request'].user
-        queryset = Rekening.objects.filter(user=user)
-        if queryset.filter(name=value).exists():
-            raise serializers.ValidationError("Nama tersebut telah ada")
-        return value
+    # def validate_name(self, value):
+    #     user = self.context['request'].user
+    #     queryset = Rekening.objects.filter(user=user)
+    #     if queryset.filter(name=value).exists():
+    #         raise serializers.ValidationError("Nama tersebut telah ada")
+    #     return value
+
+    def create(self, validated_data):
+
+        rek_new : Rekening = super(RekeningSerializer,self).create(validated_data)
+        if validated_data["initial_deposit"] >0:
+
+            tr = Transaksi(
+                trc_type=1,
+                pelaku="Initial Deposit",
+                trc_name=f"Initial Deposit rek {rek_new.name}",
+                price=validated_data["initial_deposit"],
+                rekening=rek_new,
+                trc_date=rek_new.date_created,
+                kategori=None,
+                user=self.context['request'].user,
+                is_protected= True
+            )
+            tr.save()
+
+        return rek_new
+
+    def update(self, instance, validated_data):
+
+        rek : Rekening = super(RekeningSerializer,self).update(instance,validated_data)
+
+        first_trc = Transaksi.objects.filter(rekening=rek,trc_date=rek.date_created,user=rek.user).first()
+        first_trc.price = validated_data["initial_deposit"]
+        first_trc.save()
+
+        return rek;
+
+
+
+
+class TransaksiSummarySerializer(serializers.Serializer):
+    rekening = serializers.UUIDField()
+    total = serializers.IntegerField()
+    name = serializers.CharField(max_length=50)
+    latest_trc = serializers.DateTimeField()
+    first_trc = serializers.DateTimeField()
+
 
 class TransaksiSerializer(serializers.ModelSerializer):
     id_transfer = serializers.UUIDField(read_only=True)
     id_utang_piutang = serializers.UUIDField(read_only=True)
+    is_protected = serializers.BooleanField(read_only=True,required=False)
+    rekeneing_id = serializers.UUIDField(read_only=True)
+    kategori_id = serializers.UUIDField(read_only=True)
 
     class Meta:
         model = Transaksi
         exclude = ["user"]
+
+
+
+    def to_representation(self, instance:Transaksi):
+        rep = super(TransaksiSerializer, self).to_representation(instance)
+        rep['rekening'] = instance.rekening.name
+        rep['rekening_id'] = instance.rekening.id
+        rep['kategori'] = instance.kategori.name if instance.kategori else None
+        rep['id_transfer'] = instance.id_transfer.id if instance.id_transfer else None
+        rep['kategori_id'] = instance.kategori.id if instance.kategori else None
+        rep["trc_date"] = instance.trc_date.strftime("%Y-%m-%dT%H:%M")
+        return rep
+
+    def update(self, instance, validated_data):
+
+        if instance.is_protected:
+            raise ValidationError("Transaksi Tidak Dapat Diubah")
+        instance = super(TransaksiSerializer,self).update(instance,validated_data)
+        return instance
+
 
 class CategorySerializer(serializers.ModelSerializer):
 
@@ -40,8 +104,10 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Kategori
         exclude = ["user"]
 
-class UtangPiutangSerializer(serializers.ModelSerializer):
 
+
+class UtangPiutangSerializer(serializers.ModelSerializer):
+    rekening_id = serializers.UUIDField(read_only=True)
     class Meta:
         model = UtangPiutang
         exclude = ["user"]
@@ -56,6 +122,7 @@ class UtangPiutangSerializer(serializers.ModelSerializer):
             raise  serializers.ValidationError("Cannot set is_done while creating Utang Piutang")
 
         return attrs
+
 
 
 
@@ -129,6 +196,11 @@ class UtangPiutangSerializer(serializers.ModelSerializer):
         instance: UtangPiutang = super(UtangPiutangSerializer, self).update(instance, validated_data)
         return instance
 
+    def to_representation(self, instance):
+        rep = super(UtangPiutangSerializer, self).to_representation(instance)
+        rep['rekening'] = instance.rekening.name
+        rep['rekening_id'] = instance.rekening.id
+        return rep
 
 
 
@@ -140,7 +212,8 @@ class RekeningStatsSerializer(serializers.Serializer):
     median = serializers.FloatField()
 
 class TransferSerializer(serializers.ModelSerializer):
-
+    from_account_id = serializers.UUIDField(read_only=True)
+    to_account_id = serializers.UUIDField(read_only=True)
     class Meta:
         model = Transfer
         exclude = ["user"]
@@ -206,3 +279,12 @@ class TransferSerializer(serializers.ModelSerializer):
         instance = super(TransferSerializer, self).update(instance, validated_data)
         instance.save()
         return  instance
+
+    def to_representation(self, instance:Transfer):
+        rep = super(TransferSerializer, self).to_representation(instance)
+        rep['from_account'] = instance.from_account.name
+        rep['from_account_id'] = instance.from_account.id
+        rep['to_account'] = instance.to_account.name
+        rep['to_account_id'] = instance.to_account.id
+        rep["tgl_transfer"] = instance.tgl_transfer.strftime("%Y-%m-%dT%H:%M")
+        return rep

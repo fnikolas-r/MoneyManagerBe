@@ -17,7 +17,7 @@ router.register(r'transfer',TransferViewSet,basename='k_trf')
 urlpatterns = [
     path('',include(router.urls)),
     path('login/', TokenObtainPairView.as_view(), name='obtain_token'),
-    path('login/refresh/', TokenObtainPairView.as_view(), name='refresh_token'),
+    path('login/refresh/', TokenRefreshView.as_view(), name='refresh_token'),
     path('login/profile/', UserProfileView.as_view(), name='user_profile'),
     path('register/', RegisterView.as_view(), name='auth_register'),
 ]

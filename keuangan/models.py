@@ -87,6 +87,7 @@ class Transaksi(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     id_utang_piutang = models.ForeignKey(UtangPiutang, on_delete=models.CASCADE, null=True)
     id_transfer = models.ForeignKey(Transfer,on_delete=models.CASCADE,null=True,blank=True)
+    is_protected = models.BooleanField(default=False)
 
 
     def __str__(self):
