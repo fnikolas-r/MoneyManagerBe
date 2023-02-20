@@ -86,6 +86,7 @@ class TransaksiSerializer(serializers.ModelSerializer):
         rep['rekening_id'] = instance.rekening.id
         rep['kategori'] = instance.kategori.name if instance.kategori else None
         rep['id_transfer'] = instance.id_transfer.id if instance.id_transfer else None
+        rep['id_utang_piutang'] = instance.id_utang_piutang.id if instance.id_utang_piutang else None
         rep['kategori_id'] = instance.kategori.id if instance.kategori else None
         rep["trc_date"] = instance.trc_date.strftime("%Y-%m-%dT%H:%M")
         return rep
@@ -159,9 +160,9 @@ class UtangPiutangSerializer(serializers.ModelSerializer):
         pelaku = validated_data['person_in_charge']
 
         if(instance.type=="U"):
-            trc_type = 1
-        else:
             trc_type = -1
+        else:
+            trc_type = 1
 
         for tr in Transaksi.objects.filter(id_utang_piutang=instance).all():
             tr.delete()
@@ -177,6 +178,7 @@ class UtangPiutangSerializer(serializers.ModelSerializer):
             user=self.context['request'].user,
             id_utang_piutang=instance
         )
+        # TODO:Handle Pelunasan Utang piutang. ada efek yang error di get transaksinya
         tr.save()
 
         if validated_data["is_done"]:
