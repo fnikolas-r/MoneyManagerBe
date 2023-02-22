@@ -107,6 +107,34 @@ class UtangPiutangViewSet(KeuanganViewSetComplex):
     def __init__(self,*args,**kwargs):
         super().__init__(model=UtangPiutang,*args,**kwargs)
 
+    @action(detail=True,methods=["POST"])
+    def set_done(self,request,pk=None):
+        #Kalau done hapus
+        #Kalau ga done maka kasih done
+        up:UtangPiutang = UtangPiutang.objects.filter(id=pk).first()
+
+        done_cat = 1 if up.type == "U" else -1
+        if(up.is_done):
+            Transaksi.objects.filter(id_utang_piutang=up, trc_type=done_cat).first().delete()
+        else:
+            new_trc = Transaksi(
+            trc_type=done_cat,
+            pelaku=up.person_in_charge,
+            trc_name=f"Pelunasan {'Utang' if up.type =='U' else 'Piutang'}",
+            price=up.nominal,
+            rekening=up.rekening,
+            kategori=None,
+            user=request.user,
+            id_utang_piutang=up
+        )
+            new_trc.save()
+        up.is_done = not up.is_done
+        up.save()
+
+        return response.Response(self.serializer_class(up).data,status=status.HTTP_200_OK)
+
+
+
 
 
 # Auth

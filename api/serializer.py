@@ -109,6 +109,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class UtangPiutangSerializer(serializers.ModelSerializer):
     rekening_id = serializers.UUIDField(read_only=True)
+    is_done = serializers.BooleanField(read_only=True)
     class Meta:
         model = UtangPiutang
         exclude = ["user"]
@@ -117,10 +118,6 @@ class UtangPiutangSerializer(serializers.ModelSerializer):
 
         # Validator rekening balance
         rekening_balance_validator(self.context, attrs["nominal"], attrs["rekening"])
-
-        # Validator isDone tidak boleh post
-        if self.context['request'].method == "POST" and attrs["is_done"]:
-            raise  serializers.ValidationError("Cannot set is_done while creating Utang Piutang")
 
         return attrs
 
@@ -132,17 +129,11 @@ class UtangPiutangSerializer(serializers.ModelSerializer):
         up : UtangPiutang = super(UtangPiutangSerializer,self).create(validated_data)
         pelaku = validated_data['person_in_charge']
 
-        if(up.type=="U"):
-            trc_type = 1
-            tipe = "Utang"
-        else:
-            trc_type = -1
-            tipe = "Piutang"
 
         tr = Transaksi(
-            trc_type=trc_type,
+            trc_type=1 if up.type == 'U' else -1,
             pelaku=pelaku,
-            trc_name=f"*{tipe} | {validated_data['keterangan']}",
+            trc_name=f"{'Utang dari' if up.type =='U' else 'Piutang ke'} {up.person_in_charge} ket:{validated_data['keterangan']}",
             price=validated_data["nominal"],
             rekening=up.rekening,
             trc_date=validated_data["tgl_transaksi"],
@@ -154,54 +145,38 @@ class UtangPiutangSerializer(serializers.ModelSerializer):
 
         return up
 
-    # TODO: MAKE IT SIMPLER
-    def update(self, instance, validated_data):
 
-        pelaku = validated_data['person_in_charge']
+    # NOTE: Untuk data maka ganti namanya
+    def update(self, instance : UtangPiutang, validated_data):
+        trc_type_changed = instance.type != validated_data["type"]
 
-        if(instance.type=="U"):
-            trc_type = -1
-        else:
-            trc_type = 1
+        instance = super(UtangPiutangSerializer,self).update(instance,validated_data)
 
-        for tr in Transaksi.objects.filter(id_utang_piutang=instance).all():
-            tr.delete()
 
-        tr = Transaksi(
-            trc_type=trc_type,
-            pelaku=pelaku,
-            trc_name=f"({instance.type}) {validated_data['keterangan']}",
-            price=validated_data["nominal"],
-            rekening=instance.rekening,
-            trc_date=validated_data["tgl_transaksi"],
-            kategori=None,
-            user=self.context['request'].user,
-            id_utang_piutang=instance
-        )
-        # TODO:Handle Pelunasan Utang piutang. ada efek yang error di get transaksinya
-        tr.save()
+        if(trc_type_changed):
+            # Utang Jadi Piutang
+            # Transaksi Pendapatan jadi pengeluaran
+            for trc in Transaksi.objects.filter(id_utang_piutang=instance).all():
+                trc.trc_type = -1 if trc.trc_type == 1 else 1
+                trc.name = f"{'Utang' if instance.type=='P' else 'Piutang'} -ket:{validated_data['keterangan']}"
+                trc.save()
 
-        if validated_data["is_done"]:
-            tr = Transaksi(
-                trc_type=trc_type*-1,
-                pelaku=pelaku+" |LUNAS",
-                trc_name=f"({instance.type}) {validated_data['keterangan']}",
-                price=validated_data["nominal"],
-                rekening=instance.rekening,
-                trc_date=datetime.datetime.now(),
-                kategori=None,
-                user=self.context['request'].user,
-                id_utang_piutang=instance
-            )
-            tr.save()
+        for trc in Transaksi.objects.filter(id_utang_piutang=instance).all():
+            trc.pelaku = validated_data['person_in_charge']
+            trc.date = validated_data["tgl_transaksi"]
+            trc.rekening = validated_data["rekening"]
+            trc.price = validated_data["nominal"]
+            trc.save()
 
-        instance: UtangPiutang = super(UtangPiutangSerializer, self).update(instance, validated_data)
+
         return instance
 
-    def to_representation(self, instance):
+    def to_representation(self, instance:UtangPiutang):
         rep = super(UtangPiutangSerializer, self).to_representation(instance)
         rep['rekening'] = instance.rekening.name
         rep['rekening_id'] = instance.rekening.id
+        rep["tgl_transaksi"] = instance.tgl_transaksi.strftime("%Y-%m-%dT%H:%M")
+        rep["due_date"] = instance.due_date.strftime("%Y-%m-%dT%H:%M")
         return rep
 
 

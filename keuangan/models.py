@@ -48,7 +48,7 @@ class UtangPiutang(models.Model):
     person_in_charge = models.CharField(max_length=30, null=True,
                                         blank=True)  # Penerima atau pemberi duit, bisa orang atau organisasi
     type = models.CharField(max_length=1, null=False, choices=TIPE_UTANG_PIUTANG)
-    tgl_transaksi = models.DateTimeField(default=datetime.datetime.now)
+    tgl_transaksi = models.DateTimeField(default=timezone.now)
     nominal = models.PositiveBigIntegerField(null=False, default=0,validators=[
         MinValueValidator(0)
     ])
@@ -64,7 +64,7 @@ class Transfer(models.Model):
     to_account  = models.ForeignKey(Rekening,on_delete=models.CASCADE,related_name='to_account')
     user = models.ForeignKey(User,on_delete=models.CASCADE)
     keterangan = models.CharField(max_length=10,null=True)
-    tgl_transfer = models.DateTimeField(default=datetime.datetime.now)
+    tgl_transfer = models.DateTimeField(default=timezone.now)
     nominal = models.PositiveBigIntegerField(validators=[
         MinValueValidator(0)
     ])
@@ -76,7 +76,7 @@ class Transfer(models.Model):
 class Transaksi(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     pelaku = models.CharField(max_length=30, null=True, blank=True) #Penerima atau pemberi duit, bisa orang atau organisasi
-    trc_name = models.CharField(max_length=50, null=False, blank=False)
+    trc_name = models.CharField(max_length=100, null=False, blank=False)
     price = models.PositiveBigIntegerField(null=False, blank=False,validators=[
         MinValueValidator(0)
     ])
