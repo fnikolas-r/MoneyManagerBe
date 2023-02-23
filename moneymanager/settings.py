@@ -95,15 +95,15 @@ if not DEBUG:
 
     'ENGINE': 'django.db.backends.postgresql_psycopg2',
 
-    'NAME': os.environ("DB_NAME"),
+    'NAME': env("DB_NAME"),
 
-    'USER': os.environ("DB_USERNAME"),
+    'USER': env("DB_USERNAME"),
 
-    'PASSWORD': os.environ("DB_PASSWORD"),
+    'PASSWORD': env("DB_PASSWORD"),
 
-    'HOST': os.environ("DB_HOST"),
+    'HOST': env("DB_HOST"),
 
-    'PORT': os.environ("DB_PORT"),
+    'PORT': env("DB_PORT"),
 
     }
 else:
@@ -158,7 +158,10 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+STATIC_ROOT = os.path.join(BASE_DIR,'staticfiles')
+
 STATICFILES_DIRS = [
+    BASE_DIR/'static',
     BASE_DIR / "templates/build/static/",
     BASE_DIR / "templates/static/",
 ]
