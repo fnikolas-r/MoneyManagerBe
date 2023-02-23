@@ -12,11 +12,12 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
-from environ import Env
+
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+from environ import Env
 env= Env()
 env.read_env(os.path.join(BASE_DIR, '.env'))
 
@@ -94,15 +95,15 @@ if not DEBUG:
 
     'ENGINE': 'django.db.backends.postgresql_psycopg2',
 
-    'NAME': env("DB_NAME"),
+    'NAME': os.environ("DB_NAME"),
 
-    'USER': env("DB_USERNAME"),
+    'USER': os.environ("DB_USERNAME"),
 
-    'PASSWORD': env("DB_PASSWORD"),
+    'PASSWORD': os.environ("DB_PASSWORD"),
 
-    'HOST': env("DB_HOST"),
+    'HOST': os.environ("DB_HOST"),
 
-    'PORT': env("DB_PORT"),
+    'PORT': os.environ("DB_PORT"),
 
     }
 else:
