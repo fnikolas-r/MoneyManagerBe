@@ -28,6 +28,7 @@ class Rekening(models.Model):
     initial_deposit = models.PositiveBigIntegerField(null=False, default=0, blank=False,validators=[
         MinValueValidator(0)
     ])
+    icon = models.CharField(max_length=30,null=True,blank=True)
 
     def __str__(self):
         return self.name
@@ -37,6 +38,7 @@ class Kategori(models.Model):
     name = models.CharField(max_length=50, null=False, blank=False)
     icon = models.TextField(null=True,blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    jenis = models.IntegerField(choices=TIPE,null=True)
 
     def __str__(self):
         return self.name

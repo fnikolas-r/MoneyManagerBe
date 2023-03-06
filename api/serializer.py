@@ -54,7 +54,7 @@ class RekeningSerializer(serializers.ModelSerializer):
         first_trc.price = validated_data["initial_deposit"]
         first_trc.save()
 
-        return rek;
+        return rek
 
 
 
@@ -65,6 +65,7 @@ class TransaksiSummarySerializer(serializers.Serializer):
     name = serializers.CharField(max_length=50)
     latest_trc = serializers.DateTimeField()
     first_trc = serializers.DateTimeField()
+    icon = serializers.CharField(max_length=30)
 
 
 class TransaksiSerializer(serializers.ModelSerializer):

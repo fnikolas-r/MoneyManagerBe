@@ -1,8 +1,13 @@
+import json
+
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from keuangan.models import Kategori
+import pathlib
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
@@ -36,8 +41,20 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
 
         user.set_password(validated_data['password'])
-        user.save()
 
+        with open(str(pathlib.Path(__file__).parent.resolve()) + '\\default_category.json') as file:
+            data: list = json.load(file)
+
+            for kat in data:
+                print(kat['name'])
+                kat_obj = Kategori.objects.create(
+                    user=user,
+                    name=kat['name'],
+                    icon=kat['icon'],
+                    jenis= kat.get("jenis")
+                )
+                kat_obj.save()
+        user.save()
         return user
 
 

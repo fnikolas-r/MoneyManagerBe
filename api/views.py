@@ -15,14 +15,17 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 # Create your views here.
 class KeuanganViewSetComplex(viewsets.ModelViewSet):
 
-    def __init__(self,model,custom_filter=False,*args,**kwargs):
+    def __init__(self, model, custom_order=False, *args, **kwargs):
         super().__init__(*args,**kwargs)
         self.myModel = model
-        self.custom_filter = custom_filter
+        self.custom_filter = custom_order
 
     def get_queryset(self):
         try:
             user = self.request.user
+            if self.custom_filter:
+                return self.myModel.objects.filter(user=user).order_by(self.custom_filter)
+
             return self.myModel.objects.filter(user=user)
         except:
             return []
@@ -55,6 +58,7 @@ class RekeningViewSet(KeuanganViewSetComplex):
         transaksi = transaksi.annotate(hasil=F('price')*F('trc_type')).values("rekening").annotate(
             total=Coalesce(Sum("hasil"),0),
             name=F("rekening__name"),
+            icon=F("rekening__icon"),
             latest_trc=Max("trc_date"),
             first_trc=Min("trc_date")
         )
@@ -71,7 +75,7 @@ class TransaksiViewSet(KeuanganViewSetComplex):
 
 
     def __init__(self,*args,**kwargs):
-        super().__init__(model=Transaksi,*args,**kwargs)
+        super().__init__(model=Transaksi, custom_order='trc_date', *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -115,12 +119,12 @@ class UtangPiutangViewSet(KeuanganViewSetComplex):
 
         done_cat = 1 if up.type == "U" else -1
         if(up.is_done):
-            Transaksi.objects.filter(id_utang_piutang=up, trc_type=done_cat).first().delete()
+            Transaksi.objects.exclude(trc_date=up.tgl_transaksi).filter(id_utang_piutang=up, trc_type=done_cat).first().delete()
         else:
             new_trc = Transaksi(
             trc_type=done_cat,
             pelaku=up.person_in_charge,
-            trc_name=f"Pelunasan {'Utang' if up.type =='U' else 'Piutang'}",
+            trc_name=f"Pelunasan {'Utang' if up.type =='U' else 'Piutang'} dari {up.person_in_charge}",
             price=up.nominal,
             rekening=up.rekening,
             kategori=None,

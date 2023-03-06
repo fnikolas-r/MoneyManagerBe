@@ -1,0 +1,81 @@
+[
+  {
+    "name": "Makanan",
+    "icon": "fas fa-utensil-spoon",
+    "jenis": "-1"
+  },
+  {
+    "name": "Snack",
+    "icon": "fas fa-birthday-cake",
+    "jenis": "-1"
+  },
+  {
+    "name": "Hiburan",
+    "icon": "fas fa-parachute-box",
+    "jenis": "-1"
+  },
+  {
+    "name": "Transportasi",
+    "icon": "fas fa-motorcycle",
+    "jenis": "-1"
+  },
+  {
+    "name": "Human Error",
+    "icon": "fas fa-exclamation-triangle"
+  },
+  {
+    "name": "Shopping",
+    "icon": "fas fa-shopping-cart",
+    "jenis": "-1"
+  },
+  {
+    "name": "Device & Internet",
+    "icon": "fas fa-phone",
+    "jenis": "-1"
+  },
+  {
+    "name": "Tagihan",
+    "icon": "fas fa-newspaper",
+    "jenis": "-1"
+  },
+  {
+    "name": "Ortu",
+    "icon": "fas fa-people-carry",
+    "jenis": "1"
+  },
+  {
+    "name": "Kebersihan",
+    "icon": "fas fa-hand-paper",
+    "jenis": "-1"
+  },
+  {
+    "name": "Obat & Vitamin",
+    "icon": "fas fa-briefcase-medical",
+    "jenis": "-1"
+  },
+  {
+    "name": "Hibah & Hadiah",
+    "icon": "fas fa-hand-holding-usd",
+    "jenis": "1"
+  },
+  {
+    "name": "Salary",
+    "icon": "fas fa-money-bill-alt",
+    "jenis": "1"
+  },
+  {
+    "name": "Sembako",
+    "icon": "fas fa-warehouse",
+    "jenis": "-1"
+  },
+  {
+    "name": "Edukasi",
+    "icon": "fas fa-school",
+    "jenis": "-1"
+  },
+  {
+    "name": "Pajak",
+    "icon": "fas fa-receipt",
+    "jenis": "-1"
+  }
+]
