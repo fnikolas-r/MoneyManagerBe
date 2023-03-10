@@ -1,5 +1,6 @@
 from rest_framework.validators import ValidationError
 from django.db.models.functions import Coalesce
+from django.db.models import F,Sum,Value
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
 
@@ -67,6 +68,7 @@ class TransaksiSummarySerializer(serializers.Serializer):
     latest_trc = serializers.DateTimeField()
     first_trc = serializers.DateTimeField()
     icon = serializers.CharField(max_length=30)
+    rekening_hidden = serializers.BooleanField(read_only=True)
 
 
 class TransaksiSerializer(serializers.ModelSerializer):

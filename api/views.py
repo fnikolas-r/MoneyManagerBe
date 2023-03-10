@@ -58,6 +58,7 @@ class RekeningViewSet(KeuanganViewSetComplex):
         transaksi = transaksi.annotate(hasil=F('price')*F('trc_type')).values("rekening").annotate(
             total=Coalesce(Sum("hasil"),0),
             name=F("rekening__name"),
+            rekening_hidden = F("rekening__is_hidden"),
             icon=F("rekening__icon"),
             latest_trc=Max("trc_date"),
             first_trc=Min("trc_date")
