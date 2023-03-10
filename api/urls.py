@@ -1,9 +1,9 @@
+from django.urls import path, include
 from rest_framework import routers
-from django.urls import path,include
-from .views import RekeningViewSet,TransaksiViewSet,KategoriViewSet,UtangPiutangViewSet,TransferViewSet
-from .views import RegisterView,LoginView,UserProfileView
-from rest_framework_simplejwt.views import TokenRefreshView,TokenObtainPairView
+from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 
+from .views import RegisterView, UserProfileView
+from .views import RekeningViewSet, TransaksiViewSet, KategoriViewSet, UtangPiutangViewSet, TransferViewSet
 
 router = routers.DefaultRouter()
 router.register(r'rekening', RekeningViewSet, basename='k_akun')
