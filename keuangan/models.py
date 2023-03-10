@@ -74,7 +74,7 @@ class Transfer(models.Model):
     def __str__(self):
         return f"{self.from_account.name} --> {self.to_account.name} ({self.nominal})"
 
-
+# TODO:Tambahkan Planning & Limit Saldo Nantinya
 class Transaksi(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     pelaku = models.CharField(max_length=30, null=True, blank=True) #Penerima atau pemberi duit, bisa orang atau organisasi

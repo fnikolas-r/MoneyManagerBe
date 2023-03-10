@@ -61,7 +61,7 @@ class RekeningViewSet(KeuanganViewSetComplex):
             icon=F("rekening__icon"),
             latest_trc=Max("trc_date"),
             first_trc=Min("trc_date")
-        )
+        ).order_by("-total")
 
         return response.Response(TransaksiSummarySerializer(transaksi,many=True).data,status=status.HTTP_200_OK)
 
@@ -75,7 +75,7 @@ class TransaksiViewSet(KeuanganViewSetComplex):
 
 
     def __init__(self,*args,**kwargs):
-        super().__init__(model=Transaksi, custom_order='trc_date', *args, **kwargs)
+        super().__init__(model=Transaksi, custom_order='-trc_date', *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
