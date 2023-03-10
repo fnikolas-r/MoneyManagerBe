@@ -75,6 +75,7 @@ class TransaksiSerializer(serializers.ModelSerializer):
     is_protected = serializers.BooleanField(read_only=True,required=False)
     rekeneing_id = serializers.UUIDField(read_only=True)
     kategori_id = serializers.UUIDField(read_only=True)
+    rekening_hidden = serializers.BooleanField(read_only=True,required=False)
 
     class Meta:
         model = Transaksi
@@ -85,6 +86,7 @@ class TransaksiSerializer(serializers.ModelSerializer):
     def to_representation(self, instance:Transaksi):
         rep = super(TransaksiSerializer, self).to_representation(instance)
         rep['rekening'] = instance.rekening.name
+        rep['rekening_hidden'] = instance.rekening.is_hidden
         rep['rekening_id'] = instance.rekening.id
         rep['kategori'] = instance.kategori.name if instance.kategori else None
         rep['id_transfer'] = instance.id_transfer.id if instance.id_transfer else None
