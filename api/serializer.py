@@ -135,7 +135,6 @@ class UtangPiutangSerializer(serializers.ModelSerializer):
         up : UtangPiutang = super(UtangPiutangSerializer,self).create(validated_data)
         pelaku = validated_data['person_in_charge']
 
-
         tr = Transaksi(
             trc_type=1 if up.type == 'U' else -1,
             pelaku=pelaku,

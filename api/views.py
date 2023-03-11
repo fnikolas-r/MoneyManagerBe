@@ -118,7 +118,9 @@ class UtangPiutangViewSet(KeuanganViewSetComplex):
         #Kalau ga done maka kasih done
         up:UtangPiutang = UtangPiutang.objects.filter(id=pk).first()
 
-        done_cat = 1 if up.type == "U" else -1
+        done_cat = 1
+        if up.type =="U":
+            done_cat = -1
         if(up.is_done):
             Transaksi.objects.exclude(trc_date=up.tgl_transaksi).filter(id_utang_piutang=up, trc_type=done_cat).first().delete()
         else:
@@ -130,8 +132,7 @@ class UtangPiutangViewSet(KeuanganViewSetComplex):
             rekening=up.rekening,
             kategori=None,
             user=request.user,
-            id_utang_piutang=up
-        )
+            id_utang_piutang=up)
             new_trc.save()
         up.is_done = not up.is_done
         up.save()
