@@ -118,6 +118,10 @@ class UtangPiutangViewSet(KeuanganViewSetComplex):
         #Kalau ga done maka kasih done
         up:UtangPiutang = UtangPiutang.objects.filter(id=pk).first()
 
+        tujuan = up.rekening
+        if request.data.get("tujuan"):
+            tujuan = Rekening.objects.get(pk=request.data.get("tujuan"))
+
         done_cat = 1
         if up.type =="U":
             done_cat = -1
@@ -129,7 +133,7 @@ class UtangPiutangViewSet(KeuanganViewSetComplex):
             pelaku=up.person_in_charge,
             trc_name=f"Pelunasan {'Utang' if up.type =='U' else 'Piutang'} dari {up.person_in_charge}",
             price=up.nominal,
-            rekening=up.rekening,
+            rekening=tujuan,
             kategori=None,
             user=request.user,
             id_utang_piutang=up)
