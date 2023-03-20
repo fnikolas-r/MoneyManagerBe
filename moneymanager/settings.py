@@ -195,7 +195,5 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(seconds=60*60),
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "https://fn-moneymanager-main.vercel.app/"
-]
+import json
+CORS_ALLOWED_ORIGINS = json.loads(env("CORS_ALLOW"))
