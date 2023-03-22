@@ -76,7 +76,7 @@ class TransaksiViewSet(KeuanganViewSetComplex):
 
 
     def __init__(self,*args,**kwargs):
-        super().__init__(model=Transaksi, custom_order='-trc_date', *args, **kwargs)
+        super().__init__(model=Transaksi, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

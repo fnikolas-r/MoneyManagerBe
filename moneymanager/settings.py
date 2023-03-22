@@ -93,7 +93,7 @@ WSGI_APPLICATION = 'moneymanager.wsgi.application'
 if not DEBUG:
     DB_DEFAULT = {
 
-    'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    'ENGINE': 'django.db.backends.mysql',
 
     'NAME': env("DB_NAME"),
 
