@@ -75,13 +75,19 @@ class TransaksiSerializer(serializers.ModelSerializer):
     id_transfer = serializers.UUIDField(read_only=True)
     id_utang_piutang = serializers.UUIDField(read_only=True)
     is_protected = serializers.BooleanField(read_only=True,required=False)
-    rekeneing_id = serializers.UUIDField(read_only=True)
+    rekening_id = serializers.UUIDField(read_only=True)
     kategori_id = serializers.UUIDField(read_only=True)
     rekening_hidden = serializers.BooleanField(read_only=True,required=False)
 
     class Meta:
         model = Transaksi
-        exclude = ["user"]
+        fields = (
+            "id","pelaku","trc_name","price",
+            "rekening","trc_type","trc_date",
+            "kategori","user","id_utang_piutang",
+            "id_transfer","is_protected",
+            "rekening_id","kategori_id","rekening_hidden"
+        )
 
 
 

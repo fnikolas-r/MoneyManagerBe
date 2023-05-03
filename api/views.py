@@ -1,3 +1,4 @@
+import csv
 from django.db.models import F, Sum, Q, Max, Min
 from django.db import transaction
 from django.db.models.functions import Coalesce
@@ -13,7 +14,29 @@ from django.contrib.auth.models import User
 from .permission import NotTransferAndUtangPiutang
 from rest_framework_simplejwt.views import TokenObtainPairView
 from copy import deepcopy as dp
+from django.http import HttpResponse
+from datetime import datetime
 
+
+# Functions
+def export_csv(user,serializer):
+    response = HttpResponse(content_type='text/csv')
+    current_date = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+    response['Content-Disposition'] = 'attachment; filename="{current}_{user}_{filename}"'.format(current=current_date,
+                                                                                                  user=user.username,
+                                                                                                  filename='output.csv')
+
+    object_serializer = serializer(
+        Transaksi.objects.filter(user=user),
+        many=True
+    )
+    header= TransaksiSerializer.Meta.fields
+
+    writer = csv.DictWriter(response,fieldnames=header)
+    writer.writeheader()
+    for row in object_serializer.data:
+        writer.writerow(row)
+    return response
 
 # Create your views here.
 class KeuanganViewSetComplex(viewsets.ModelViewSet):
@@ -91,6 +114,13 @@ class TransaksiViewSet(KeuanganViewSetComplex):
             return response.Response("Tidak Dapat Menghapus Data yang dilindungi", status=status.HTTP_400_BAD_REQUEST)
         else:
             return super(TransaksiViewSet, self).destroy(request, *args, **kwargs)
+
+    @action(methods=["GET"],detail=False)
+    def exports(self,request):
+        output = request.query_params.get("o")
+        if output == "csv":
+            return export_csv(self.request.user,self.serializer_class)
+        return response.Response({"message": "Harap Tentukan jenis File Output"}, status.HTTP_400_BAD_REQUEST)
 
 
 class TransferViewSet(KeuanganViewSetComplex):
