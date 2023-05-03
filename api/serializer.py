@@ -84,7 +84,7 @@ class TransaksiSerializer(serializers.ModelSerializer):
         fields = (
             "id","pelaku","trc_name","price",
             "rekening","trc_type","trc_date",
-            "kategori","user","id_utang_piutang",
+            "kategori","id_utang_piutang",
             "id_transfer","is_protected",
             "rekening_id","kategori_id","rekening_hidden"
         )
