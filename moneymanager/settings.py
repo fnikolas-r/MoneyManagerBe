@@ -90,30 +90,12 @@ WSGI_APPLICATION = 'moneymanager.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-if not DEBUG:
-    DB_DEFAULT = {
 
-    'ENGINE': 'django.db.backends.mysql',
-
-    'NAME': env("DB_NAME"),
-
-    'USER': env("DB_USERNAME"),
-
-    'PASSWORD': env("DB_PASSWORD"),
-
-    'HOST': env("DB_HOST"),
-
-    'PORT': env("DB_PORT"),
-
-    }
-else:
-    DB_DEFAULT = {
+DATABASES = {
+    'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
-
-DATABASES = {
-    'default': DB_DEFAULT
 
 }
 
