@@ -271,6 +271,26 @@ def login_by_google(request):
         return response.Response({"message":f"Terjadi Kesalahan {e}"}
                                      ,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(["POST"])
+def link_google(request):
+    print(request.data)
+    key = request.data.get("t")
+    if not key:
+        return response.Response({"message":"Token Otentikasi Tidak Ditemukan"},status=status.HTTP_400_BAD_REQUEST)
+    result = req_lib.get(f"https://www.googleapis.com/oauth2/v1/userinfo?access_token={key}",
+                         headers={"Authorization": "Bearer " + key})
+    try:
+        result = result.json()
+        id = result.get('id')
+        profile = Profile.objects.filter(user=request.user).first()
+        profile.google_id = id;
+        profile.google_data = json.dumps(result)
+        profile.save()
+        return response.Response({"message":"Berhasil Login"},status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return response.Response({"message":f"Terjadi Kesalahan {e}"}
+                                     ,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ProfileViewSet(mixins.ListModelMixin,
@@ -293,7 +313,15 @@ class ProfileViewSet(mixins.ListModelMixin,
         return response.Response(serializer.data)
 
     def patch(self,request,*args,**kwargs):
-        return self.partial_update(request,*args,**kwargs)
+        instance = Profile.objects.filter(user=self.request.user).first()
+        serializer = self.get_serializer(instance,data=request.data,partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return response.Response(ProfileSerializer(
+            Profile.objects.filter(user=self.request.user).first()).data,
+                                 status=status.HTTP_200_OK)
+
 
     @action(methods=["POST"],detail=False)
     def delete_photo(self,request,*args,**kwargs):
@@ -306,3 +334,12 @@ class ProfileViewSet(mixins.ListModelMixin,
                 return response.Response({"message":"Berhasil Menghapus File"},status=status.HTTP_200_OK)
         return response.Response({"message": "Tidak Ada File Profile"}, status=status.HTTP_400_BAD_REQUEST)
 
+
+    @action(methods=["DELETE"],detail=False)
+    def delete_google_link(self,request,*args,**kwargs):
+        instance = Profile.objects.filter(user=self.request.user).first()
+        instance.google_id = None
+        instance.google_data = None
+        instance.save()
+
+        return response.Response(self.get_serializer(instance).data,status=status.HTTP_200_OK)

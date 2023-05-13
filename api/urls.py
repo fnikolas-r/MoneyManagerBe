@@ -5,7 +5,7 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 from .views import RegisterView
 from .views import RekeningViewSet, TransaksiViewSet, KategoriViewSet, UtangPiutangViewSet, TransferViewSet,\
     ProfileViewSet
-from .views import login_by_google
+from .views import login_by_google,link_google
 
 router = routers.DefaultRouter()
 router.register(r'rekening', RekeningViewSet, basename='k_akun')
@@ -23,13 +23,12 @@ urlpatterns = [
     path('login/refresh/', TokenRefreshView.as_view(), name='refresh_token'),
     path('login/profile/', ProfileViewSet.as_view({
         'get': 'retrieve',
+        'patch':'patch',
+        'delete':'delete_google_link'
     }), name='user_profile'),
-    path('login/profile/<int:pk>', ProfileViewSet.as_view({
-        'get': 'retrieve',
-        'patch': 'patch',
-    }), name='user_profile_detail'),
     path('login/profile/delete_photo/', ProfileViewSet.as_view({
         'post':'delete_photo'
     }), name='user_photo_delete'),
+    path('login/profile/link/',link_google , name='user_google_link'),
     path('register/', RegisterView.as_view(), name='auth_register'),
 ]

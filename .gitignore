@@ -6,3 +6,4 @@ djangovenv/
 react_moneymgr/
 **/.env
 moneymanager.zip
+media/

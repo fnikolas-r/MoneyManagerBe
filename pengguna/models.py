@@ -35,3 +35,14 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
+
+@receiver(models.signals.pre_save, sender=Profile) # sender - Specifies a particular sender to receive signals from.
+def deleting_old_pic_on_update(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            old_picture = Profile.objects.get(pk=instance.pk).photo
+            new_picture = instance.photo
+            if old_picture and (old_picture.url != new_picture.url):
+                old_picture.delete(save=False)
+        except:
+            pass

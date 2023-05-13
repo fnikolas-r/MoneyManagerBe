@@ -80,10 +80,11 @@ class ProfileSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(source='user.last_name')
     email = serializers.CharField(source='user.email')
     username = serializers.CharField(source='user.username')
+    user_id = serializers.UUIDField(source='user.id')
 
     class Meta:
         model = Profile
-        exclude = ("user","google_id")
+        exclude = ("user","google_id","id")
 
     def update(self, instance:Profile, validated_data):
         user_data = validated_data.get("user")
