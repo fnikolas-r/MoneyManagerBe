@@ -1,13 +1,14 @@
 import csv
+import json
+
 from django.db.models import F, Sum, Q, Max, Min
 from django.db import transaction
 from django.db.models.functions import Coalesce
-from rest_framework import viewsets, response, generics, status
-from rest_framework.views import APIView
-from rest_framework.decorators import action
+from rest_framework import viewsets, response, generics, status,mixins
+from rest_framework.decorators import action,api_view
 from .serializer import RekeningSerializer, TransaksiSerializer, CategorySerializer, \
     UtangPiutangSerializer, TransferSerializer, TransaksiSummarySerializer
-from .auth_serializer import RegisterSerializer, LoginSerializer
+from .auth_serializer import UserSerializer, LoginSerializer,ProfileSerializer
 from keuangan.models import Rekening, Transaksi, Kategori, UtangPiutang, Transfer
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.models import User
@@ -16,7 +17,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from copy import deepcopy as dp
 from django.http import HttpResponse
 from datetime import datetime
-
+from pengguna.models import Profile
+import os
+import requests as req_lib
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # Functions
 def export_csv(user,serializer):
@@ -235,15 +239,70 @@ class UtangPiutangViewSet(KeuanganViewSetComplex):
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
-    serializer_class = RegisterSerializer
+    serializer_class = UserSerializer
 
 
 class LoginView(TokenObtainPairView):
     serializer_class = LoginSerializer
 
+@api_view(["POST"])
+def login_by_google(request):
+    key = request.data.get("t")
+    if not key:
+        return response.Response({"message":"Token Otentikasi Tidak Ditemukan"},status=status.HTTP_400_BAD_REQUEST)
+    result = req_lib.get(f"https://www.googleapis.com/oauth2/v1/userinfo?access_token={key}",
+                         headers={"Authorization": "Bearer " + key})
+    try:
+        result = result.json()
+        id = result.get('id')
+        profile = Profile.objects.filter(google_id=id)
+        if profile.exists():
+            profile = profile.first()
+            profile.google_data = json.dumps(result)
+            profile.save()
+            refresh = RefreshToken.for_user(profile.user)
+            return response.Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            },status=status.HTTP_200_OK)
+        return response.Response({"message":"Akun Tidak Ditemukan"},status=status.HTTP_400_BAD_REQUEST)
 
-class UserProfileView(APIView):
+    except Exception as e:
+        return response.Response({"message":f"Terjadi Kesalahan {e}"}
+                                     ,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class ProfileViewSet(mixins.ListModelMixin,
+                     mixins.UpdateModelMixin,
+                     mixins.RetrieveModelMixin,
+                     viewsets.GenericViewSet):
+    serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, format=None):
-        return response.Response(RegisterSerializer(request.user).data, status.HTTP_200_OK)
+    def get_queryset(self):
+        try:
+            user = self.request.user
+            return Profile.objects.filter(user=user)
+        except:
+            return []
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = Profile.objects.filter(user=self.request.user).first()
+        serializer = self.get_serializer(instance)
+        return response.Response(serializer.data)
+
+    def patch(self,request,*args,**kwargs):
+        return self.partial_update(request,*args,**kwargs)
+
+    @action(methods=["POST"],detail=False)
+    def delete_photo(self,request,*args,**kwargs):
+        instance = Profile.objects.filter(user=self.request.user).first()
+        if instance.photo:
+            if os.path.isfile(instance.photo.path):
+                os.remove(instance.photo.path)
+                instance.photo = None
+                instance.save()
+                return response.Response({"message":"Berhasil Menghapus File"},status=status.HTTP_200_OK)
+        return response.Response({"message": "Tidak Ada File Profile"}, status=status.HTTP_400_BAD_REQUEST)
+

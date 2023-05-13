@@ -179,3 +179,6 @@ SIMPLE_JWT = {
 
 import json
 CORS_ALLOWED_ORIGINS = json.loads(env("CORS_ALLOW"))
+
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR/ 'media'
