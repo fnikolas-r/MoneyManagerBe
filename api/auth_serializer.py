@@ -8,7 +8,7 @@ from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from pengguna.models import Profile
 from keuangan.models import Kategori
-
+from django.conf import settings
 
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
@@ -97,8 +97,12 @@ class ProfileSerializer(serializers.ModelSerializer):
             user.username = user_data.get("username", instance.user.username)
             user.save()
         instance.bio = validated_data.get("bio",instance.bio)
-        print(validated_data)
         instance.photo = validated_data.get("photo",instance.photo)
         instance.save()
 
         return Profile.objects.filter(user=user).first()
+
+    def to_representation(self, instance):
+        rep = super(ProfileSerializer,self).to_representation(instance)
+        rep['photo'] = f"{settings.MEDIA_URL}{instance.photo}" if instance.photo else None
+        return rep
