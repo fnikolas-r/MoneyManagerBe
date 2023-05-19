@@ -28,6 +28,8 @@ class Rekening(models.Model):
     initial_deposit = models.PositiveBigIntegerField(null=False, default=0, blank=False,validators=[
         MinValueValidator(0)
     ])
+    trf_minimum = models.PositiveBigIntegerField(null=True,blank=True)
+    is_pinned = models.BooleanField(null=True,blank=True,default=False)
     icon = models.CharField(max_length=30,null=True,blank=True)
 
     def __str__(self):

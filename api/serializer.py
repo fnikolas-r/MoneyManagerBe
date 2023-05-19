@@ -19,7 +19,7 @@ class RekeningSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Rekening
-        exclude = ["user"]
+        exclude = ["user","is_pinned"]
 
     # def validate_name(self, value):
     #     user = self.context['request'].user
@@ -58,6 +58,10 @@ class RekeningSerializer(serializers.ModelSerializer):
 
         return rek
 
+    def to_representation(self, instance : Rekening):
+        rep = super(RekeningSerializer,self).to_representation(instance)
+        rep["trf_minimum"] =instance.trf_minimum or 0
+        return rep
 
 
 
@@ -69,6 +73,8 @@ class TransaksiSummarySerializer(serializers.Serializer):
     first_trc = serializers.DateTimeField()
     icon = serializers.CharField(max_length=30)
     rekening_hidden = serializers.BooleanField(read_only=True)
+    pinned = serializers.BooleanField(read_only=True)
+    trf_minimum = serializers.IntegerField(read_only=True)
 
 
 class TransaksiSerializer(serializers.ModelSerializer):

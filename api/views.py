@@ -1,14 +1,14 @@
 import csv
 import json
-
+from django.shortcuts import get_object_or_404
 from django.db.models import F, Sum, Q, Max, Min
 from django.db import transaction
 from django.db.models.functions import Coalesce
-from rest_framework import viewsets, response, generics, status,mixins
-from rest_framework.decorators import action,api_view
+from rest_framework import viewsets, response, generics, status, mixins
+from rest_framework.decorators import action, api_view
 from .serializer import RekeningSerializer, TransaksiSerializer, CategorySerializer, \
     UtangPiutangSerializer, TransferSerializer, TransaksiSummarySerializer
-from .auth_serializer import UserSerializer, LoginSerializer,ProfileSerializer
+from .auth_serializer import UserSerializer, LoginSerializer, ProfileSerializer
 from keuangan.models import Rekening, Transaksi, Kategori, UtangPiutang, Transfer
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.models import User
@@ -22,8 +22,9 @@ import os
 import requests as req_lib
 from rest_framework_simplejwt.tokens import RefreshToken
 
+
 # Functions
-def export_csv(user,serializer):
+def export_csv(user, serializer):
     response = HttpResponse(content_type='text/csv')
     current_date = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
     response['Content-Disposition'] = 'attachment; filename="{current}_{user}_{filename}"'.format(current=current_date,
@@ -34,13 +35,14 @@ def export_csv(user,serializer):
         Transaksi.objects.filter(user=user),
         many=True
     )
-    header= TransaksiSerializer.Meta.fields
+    header = TransaksiSerializer.Meta.fields
 
-    writer = csv.DictWriter(response,fieldnames=header)
+    writer = csv.DictWriter(response, fieldnames=header)
     writer.writeheader()
     for row in object_serializer.data:
         writer.writerow(row)
     return response
+
 
 # Create your views here.
 class KeuanganViewSetComplex(viewsets.ModelViewSet):
@@ -94,10 +96,18 @@ class RekeningViewSet(KeuanganViewSetComplex):
             rekening_hidden=F("rekening__is_hidden"),
             icon=F("rekening__icon"),
             latest_trc=Max("trc_date"),
-            first_trc=Min("trc_date")
-        ).order_by("-total")
-
+            first_trc=Min("trc_date"),
+            pinned=F("rekening__is_pinned"),
+            trf_minimum=Coalesce(F("rekening__trf_minimum"),0)
+        ).order_by("-pinned","-total")
         return response.Response(TransaksiSummarySerializer(transaksi, many=True).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["POST"])
+    def set_pinned(self, request, pk=None, *args, **kwargs):
+        instance: Rekening = get_object_or_404(Rekening, pk=pk)
+        instance.is_pinned = not instance.is_pinned
+        instance.save()
+        return response.Response(self.get_serializer(instance).data, status=status.HTTP_200_OK)
 
     @action(detail=True)
     def transfer_list(self, request, pk=None):
@@ -110,7 +120,7 @@ class TransaksiViewSet(KeuanganViewSetComplex):
     permission_classes = [IsAuthenticated, NotTransferAndUtangPiutang]
 
     def __init__(self, *args, **kwargs):
-        super().__init__(model=Transaksi,custom_order='-trc_date',*args, **kwargs)
+        super().__init__(model=Transaksi, custom_order='-trc_date', *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -119,11 +129,11 @@ class TransaksiViewSet(KeuanganViewSetComplex):
         else:
             return super(TransaksiViewSet, self).destroy(request, *args, **kwargs)
 
-    @action(methods=["GET"],detail=False)
-    def exports(self,request):
+    @action(methods=["GET"], detail=False)
+    def exports(self, request):
         output = request.query_params.get("o")
         if output == "csv":
-            return export_csv(self.request.user,self.serializer_class)
+            return export_csv(self.request.user, self.serializer_class)
         return response.Response({"message": "Harap Tentukan jenis File Output"}, status.HTTP_400_BAD_REQUEST)
 
 
@@ -132,7 +142,7 @@ class TransferViewSet(KeuanganViewSetComplex):
     permission_classes = [IsAuthenticated]
 
     def __init__(self, *args, **kwargs):
-        super().__init__(model=Transfer,custom_order='-tgl_transfer', *args, **kwargs)
+        super().__init__(model=Transfer, custom_order='-tgl_transfer', *args, **kwargs)
 
 
 class KategoriViewSet(KeuanganViewSetComplex):
@@ -155,7 +165,7 @@ class UtangPiutangViewSet(KeuanganViewSetComplex):
     serializer_class = UtangPiutangSerializer
 
     def __init__(self, *args, **kwargs):
-        super().__init__(model=UtangPiutang,custom_order='-tgl_transaksi', *args, **kwargs)
+        super().__init__(model=UtangPiutang, custom_order='-tgl_transaksi', *args, **kwargs)
 
     @action(detail=True, methods=["POST"])
     def set_done(self, request, pk=None):
@@ -245,11 +255,12 @@ class RegisterView(generics.CreateAPIView):
 class LoginView(TokenObtainPairView):
     serializer_class = LoginSerializer
 
+
 @api_view(["POST"])
 def login_by_google(request):
     key = request.data.get("t")
     if not key:
-        return response.Response({"message":"Token Otentikasi Tidak Ditemukan"},status=status.HTTP_400_BAD_REQUEST)
+        return response.Response({"message": "Token Otentikasi Tidak Ditemukan"}, status=status.HTTP_400_BAD_REQUEST)
     result = req_lib.get(f"https://www.googleapis.com/oauth2/v1/userinfo?access_token={key}",
                          headers={"Authorization": "Bearer " + key})
     try:
@@ -264,19 +275,20 @@ def login_by_google(request):
             return response.Response({
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
-            },status=status.HTTP_200_OK)
-        return response.Response({"message":"Akun Tidak Ditemukan"},status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_200_OK)
+        return response.Response({"message": "Akun Tidak Ditemukan"}, status=status.HTTP_400_BAD_REQUEST)
 
     except Exception as e:
-        return response.Response({"message":f"Terjadi Kesalahan {e}"}
-                                     ,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return response.Response({"message": f"Terjadi Kesalahan {e}"}
+                                 , status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(["POST"])
 def link_google(request):
     print(request.data)
     key = request.data.get("t")
     if not key:
-        return response.Response({"message":"Token Otentikasi Tidak Ditemukan"},status=status.HTTP_400_BAD_REQUEST)
+        return response.Response({"message": "Token Otentikasi Tidak Ditemukan"}, status=status.HTTP_400_BAD_REQUEST)
     result = req_lib.get(f"https://www.googleapis.com/oauth2/v1/userinfo?access_token={key}",
                          headers={"Authorization": "Bearer " + key})
     try:
@@ -286,11 +298,11 @@ def link_google(request):
         profile.google_id = id;
         profile.google_data = json.dumps(result)
         profile.save()
-        return response.Response({"message":"Berhasil Login"},status=status.HTTP_200_OK)
+        return response.Response({"message": "Berhasil Login"}, status=status.HTTP_200_OK)
 
     except Exception as e:
-        return response.Response({"message":f"Terjadi Kesalahan {e}"}
-                                     ,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return response.Response({"message": f"Terjadi Kesalahan {e}"}
+                                 , status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ProfileViewSet(mixins.ListModelMixin,
@@ -312,9 +324,9 @@ class ProfileViewSet(mixins.ListModelMixin,
         serializer = self.get_serializer(instance)
         return response.Response(serializer.data)
 
-    def patch(self,request,*args,**kwargs):
+    def patch(self, request, *args, **kwargs):
         instance = Profile.objects.filter(user=self.request.user).first()
-        serializer = self.get_serializer(instance,data=request.data,partial=True)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
@@ -322,24 +334,22 @@ class ProfileViewSet(mixins.ListModelMixin,
             Profile.objects.filter(user=self.request.user).first()).data,
                                  status=status.HTTP_200_OK)
 
-
-    @action(methods=["POST"],detail=False)
-    def delete_photo(self,request,*args,**kwargs):
+    @action(methods=["POST"], detail=False)
+    def delete_photo(self, request, *args, **kwargs):
         instance = Profile.objects.filter(user=self.request.user).first()
         if instance.photo:
             if os.path.isfile(instance.photo.path):
                 os.remove(instance.photo.path)
                 instance.photo = None
                 instance.save()
-                return response.Response({"message":"Berhasil Menghapus File"},status=status.HTTP_200_OK)
+                return response.Response({"message": "Berhasil Menghapus File"}, status=status.HTTP_200_OK)
         return response.Response({"message": "Tidak Ada File Profile"}, status=status.HTTP_400_BAD_REQUEST)
 
-
-    @action(methods=["DELETE"],detail=False)
-    def delete_google_link(self,request,*args,**kwargs):
+    @action(methods=["DELETE"], detail=False)
+    def delete_google_link(self, request, *args, **kwargs):
         instance = Profile.objects.filter(user=self.request.user).first()
         instance.google_id = None
         instance.google_data = None
         instance.save()
 
-        return response.Response(self.get_serializer(instance).data,status=status.HTTP_200_OK)
+        return response.Response(self.get_serializer(instance).data, status=status.HTTP_200_OK)

@@ -7,3 +7,4 @@ react_moneymgr/
 **/.env
 moneymanager.zip
 media/
+createFakeData.py
