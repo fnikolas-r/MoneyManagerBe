@@ -50,7 +50,6 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'pengguna.apps.PenggunaConfig',
     'keuangan.apps.KeuanganConfig',
-    'planning.apps.PlanningConfig',
 ]
 
 MIDDLEWARE = [

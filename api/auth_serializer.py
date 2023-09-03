@@ -18,8 +18,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
-    bio = serializers.CharField(source='profile.bio')
-    photo = serializers.ImageField(source='profile.photo')
+    bio = serializers.CharField(source='profile.bio',required=False)
+    photo = serializers.ImageField(source='profile.photo',required=False)
 
     class Meta:
         model = User
@@ -45,7 +45,7 @@ class UserSerializer(serializers.ModelSerializer):
 
         user.set_password(validated_data['password'])
 
-        with open(str(pathlib.Path(__file__).parent.resolve()) + '\\default_category.json') as file:
+        with open(str(pathlib.Path(__file__).parent.resolve()) + '/default_category.json') as file:
             data: list = json.load(file)
 
             for kat in data:

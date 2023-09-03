@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 
-from .views import RegisterView, AnggaranViewSet, AnggaranPerKategoriViewSet, AlokasiDanaViewset, DaftarBelanjaViewSet
+from .views import RegisterView
 from .views import RekeningViewSet, TransaksiViewSet, KategoriViewSet, UtangPiutangViewSet, TransferViewSet,\
     ProfileViewSet
 from .views import login_by_google,link_google
@@ -13,10 +13,6 @@ router.register(r'transaksi',TransaksiViewSet,basename='k_trc')
 router.register(r'kategori',KategoriViewSet,basename='k_cat')
 router.register(r'utangpiutang',UtangPiutangViewSet,basename='k_up')
 router.register(r'transfer',TransferViewSet,basename='k_trf')
-router.register(r'anggaran',AnggaranViewSet,basename='p_anggaran')
-router.register(r'anggaran-by-kategori',AnggaranPerKategoriViewSet,basename='p_anggaran_kategori')
-router.register(r'alokasi-dana',AlokasiDanaViewset,basename='p_anggaran_alokasi')
-router.register(r'daftar-belanja',DaftarBelanjaViewSet,basename='p_daftar_belanja')
 
 
 

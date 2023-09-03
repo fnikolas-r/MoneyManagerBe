@@ -1,4 +1,3 @@
-from django.urls import reverse
 from rest_framework.validators import ValidationError
 from django.db.models.functions import Coalesce
 from django.db.models import F,Sum,Value
@@ -6,7 +5,6 @@ from rest_framework import serializers
 from rest_framework.validators import ValidationError
 
 from keuangan.models import Rekening, Kategori, Transaksi, UtangPiutang, Transfer
-from planning.models import Anggaran, AnggaranPerKategori, AlokasiDana, DaftarBelanja
 
 
 def rekening_balance_validator(context,value,rekening_id,message="Nominal Melebihi Total Saldo"):
@@ -283,71 +281,4 @@ class TransferSerializer(serializers.ModelSerializer):
         rep['to_account'] = instance.to_account.name
         rep['to_account_id'] = instance.to_account.id
         rep["tgl_transfer"] = instance.tgl_transfer.strftime("%Y-%m-%dT%H:%M")
-        return rep
-
-class AnggaranPerKategoriSerializer(serializers.ModelSerializer):
-    anggaran_url = serializers.SerializerMethodField()
-    tanggal_mulai = serializers.DateTimeField(read_only=True)
-    tanggal_selesai = serializers.DateTimeField(read_only=True)
-
-    class Meta:
-        model = AnggaranPerKategori
-        fields = "__all__"
-
-    def get_anggaran_url(self, obj):
-        request = self.context.get('request')
-        anggaran_id = obj.anggaran.id
-        anggaran_url = request.build_absolute_uri(reverse('p_anggaran-detail', args=[anggaran_id]))
-        return anggaran_url
-
-    def to_representation(self, instance):
-        rep = super(AnggaranPerKategoriSerializer, self).to_representation(instance)
-        rep["tanggal_mulai"] = instance.anggaran.tanggal_mulai.strftime("%Y-%m-%dT%H:%M")
-        rep["tanggal_selesai"] = instance.anggaran.tanggal_selesai.strftime("%Y-%m-%dT%H:%M")
-        return rep
-
-class AlokasiDanaSerializer(serializers.ModelSerializer):
-    anggaran_url = serializers.SerializerMethodField()
-    tanggal_mulai = serializers.DateTimeField(read_only=True)
-    tanggal_selesai = serializers.DateTimeField(read_only=True)
-    class Meta:
-        model = AlokasiDana
-        fields = "__all__"
-
-    def get_anggaran_url(self, obj):
-        request = self.context.get('request')
-        anggaran_id = obj.anggaran.id
-        anggaran_url = request.build_absolute_uri(reverse('p_anggaran-detail', args=[anggaran_id]))
-        return anggaran_url
-
-    def to_representation(self, instance):
-        rep = super(AlokasiDanaSerializer, self).to_representation(instance)
-        rep["tanggal_mulai"] = instance.anggaran.tanggal_mulai.strftime("%Y-%m-%dT%H:%M")
-        rep["tanggal_selesai"] = instance.anggaran.tanggal_selesai.strftime("%Y-%m-%dT%H:%M")
-        return rep
-
-class DaftarBelanjaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DaftarBelanja
-        fields = (
-            "id","trc_name","price",
-            "rekening","trc_type",
-            "kategori","anggaran","is_done"
-        )
-
-
-
-class AnggaranSerializer(serializers.ModelSerializer):
-    anggaran_by_kategori = AnggaranPerKategoriSerializer(many=True, read_only=True)
-    alokasi_dana = AlokasiDanaSerializer(many=True, read_only=True)
-    daftar_belanja = DaftarBelanjaSerializer(many=True,read_only=True)
-
-    class Meta:
-        model = Anggaran
-        fields = ["id","saldo_awal","tanggal_mulai","tanggal_selesai","anggaran_by_kategori","alokasi_dana","daftar_belanja"]
-
-    def to_representation(self, instance):
-        rep = super(AnggaranSerializer, self).to_representation(instance)
-        rep["tanggal_mulai"] = instance.tanggal_mulai.strftime("%Y-%m-%dT%H:%M")
-        rep["tanggal_selesai"] = instance.tanggal_selesai.strftime("%Y-%m-%dT%H:%M")
         return rep

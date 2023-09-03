@@ -77,23 +77,22 @@ class Transfer(models.Model):
         return f"{self.from_account.name} --> {self.to_account.name} ({self.nominal})"
 
 # TODO:Tambahkan Planning & Limit Saldo Nantinya
-
-class TransaksiAbstract(models.Model):
+class Transaksi(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    pelaku = models.CharField(max_length=30, null=True, blank=True) #Penerima atau pemberi duit, bisa orang atau organisasi
     trc_name = models.CharField(max_length=100, null=False, blank=False)
-    price = models.PositiveBigIntegerField(null=False, blank=False,validators=[MinValueValidator(0)])
+    price = models.PositiveBigIntegerField(null=False, blank=False,validators=[
+        MinValueValidator(0)
+    ])
     rekening = models.ForeignKey(Rekening, on_delete=models.CASCADE)
     trc_type = models.IntegerField(choices=TIPE)
+    trc_date = models.DateTimeField(default=timezone.now, null=False, blank=False)
     kategori = models.ForeignKey(Kategori, on_delete=models.SET_NULL, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    class Meta:
-        abstract = True
-class Transaksi(TransaksiAbstract):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     id_utang_piutang = models.ForeignKey(UtangPiutang, on_delete=models.CASCADE, null=True)
     id_transfer = models.ForeignKey(Transfer,on_delete=models.CASCADE,null=True,blank=True)
-    trc_date = models.DateTimeField(default=timezone.now, null=False, blank=False)
-    pelaku = models.CharField(max_length=30, null=True, blank=True) #Penerima atau pemberi duit, bisa orang atau organisasi
     is_protected = models.BooleanField(default=False)
+
 
     def __str__(self):
         return self.trc_name
