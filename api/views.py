@@ -6,8 +6,11 @@ from django.db import transaction
 from django.db.models.functions import Coalesce
 from rest_framework import viewsets, response, generics, status, mixins
 from rest_framework.decorators import action, api_view
+
+from planning.models import Anggaran, AnggaranPerKategori, AlokasiDana, DaftarBelanja
 from .serializer import RekeningSerializer, TransaksiSerializer, CategorySerializer, \
-    UtangPiutangSerializer, TransferSerializer, TransaksiSummarySerializer
+    UtangPiutangSerializer, TransferSerializer, TransaksiSummarySerializer, AnggaranSerializer, \
+    AnggaranPerKategoriSerializer, AlokasiDanaSerializer, DaftarBelanjaSerializer
 from .auth_serializer import UserSerializer, LoginSerializer, ProfileSerializer
 from keuangan.models import Rekening, Transaksi, Kategori, UtangPiutang, Transfer
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -45,12 +48,27 @@ def export_csv(user, serializer):
 
 
 # Create your views here.
-class KeuanganViewSetComplex(viewsets.ModelViewSet):
-
+class BasicViewset(viewsets.ModelViewSet):
     def __init__(self, model, custom_order=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.myModel = model
         self.custom_filter = custom_order
+    def get_queryset(self):
+        try:
+            user = self.request.user
+            if self.custom_filter:
+                return self.myModel.objects.filter(user=user).order_by(self.custom_filter)
+
+            return self.myModel.objects.filter(user=user)
+        except:
+            return []
+
+
+
+class KeuanganViewSetComplex(BasicViewset):
+
+    def __init__(self, model, custom_order=False, *args, **kwargs):
+        super().__init__(model, custom_order, *args, **kwargs)
 
     def get_queryset(self):
         try:
@@ -353,3 +371,50 @@ class ProfileViewSet(mixins.ListModelMixin,
         instance.save()
 
         return response.Response(self.get_serializer(instance).data, status=status.HTTP_200_OK)
+
+class AnggaranViewSet(KeuanganViewSetComplex):
+
+    serializer_class = AnggaranSerializer
+    permission_classes = [IsAuthenticated]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(model=Anggaran,custom_order="-tanggal_mulai",*args,**kwargs)
+
+class AnggaranPerKategoriViewSet(BasicViewset):
+    serializer_class = AnggaranPerKategoriSerializer
+    permission_classes = [IsAuthenticated]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(model=AnggaranPerKategori, *args, **kwargs)
+
+    def get_queryset(self):
+        try:
+            return AnggaranPerKategori.objects.filter(anggaran__user=self.request.user)
+        except:
+            return []
+class AlokasiDanaViewset(BasicViewset):
+    serializer_class = AlokasiDanaSerializer
+    permission_classes = [IsAuthenticated]
+
+    def __init__(self,*args,**kwargs):
+        super().__init__(model=AlokasiDana, *args, **kwargs)
+
+    def get_queryset(self):
+        try:
+            return AlokasiDanaSerializer.objects.filter(anggaran__user=self.request.user)
+        except:
+            return []
+
+class DaftarBelanjaViewSet(KeuanganViewSetComplex):
+    serializer_class = DaftarBelanjaSerializer
+    permission_classes = [IsAuthenticated]
+
+    def __init__(self,*args,**kwargs):
+        super().__init__(DaftarBelanja)
+
+
+    def get_queryset(self):
+        try:
+            return DaftarBelanja.objects.filter(user=self.request.user)
+        except:
+            return []
