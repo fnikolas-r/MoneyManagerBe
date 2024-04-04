@@ -6,6 +6,7 @@ from .views import RegisterView
 from .views import RekeningViewSet, TransaksiViewSet, KategoriViewSet, UtangPiutangViewSet, TransferViewSet,\
     ProfileViewSet
 from .views import login_by_google,link_google
+from .views_anggaran import AnggaranViewSet, LimitAnggaranViewSet, TabunganInvestasiViewSet, DaftarBelanjaViewSet
 
 router = routers.DefaultRouter()
 router.register(r'rekening', RekeningViewSet, basename='k_akun')
@@ -13,7 +14,10 @@ router.register(r'transaksi',TransaksiViewSet,basename='k_trc')
 router.register(r'kategori',KategoriViewSet,basename='k_cat')
 router.register(r'utangpiutang',UtangPiutangViewSet,basename='k_up')
 router.register(r'transfer',TransferViewSet,basename='k_trf')
-
+router.register(r'anggaran',AnggaranViewSet,basename='a_ang')
+router.register(r'limit-anggaran',LimitAnggaranViewSet,basename='a_limit')
+router.register(r'tabungan-investasi',TabunganInvestasiViewSet,basename='a_tabung_invest')
+router.register(r'daftar-belanja',DaftarBelanjaViewSet,basename='a_daftar_belanja')
 
 
 urlpatterns = [

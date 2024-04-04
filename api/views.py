@@ -45,18 +45,18 @@ def export_csv(user, serializer):
 
 
 # Create your views here.
-class KeuanganViewSetComplex(viewsets.ModelViewSet):
+class KeuanganBaseViewSet(viewsets.ModelViewSet):
 
     def __init__(self, model, custom_order=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.myModel = model
-        self.custom_filter = custom_order
+        self.custom_order = custom_order
 
     def get_queryset(self):
         try:
             user = self.request.user
-            if self.custom_filter:
-                return self.myModel.objects.filter(user=user).order_by(self.custom_filter)
+            if self.custom_order:
+                return self.myModel.objects.filter(user=user).order_by(self.custom_order)
 
             return self.myModel.objects.filter(user=user)
         except:
@@ -74,7 +74,7 @@ class KeuanganViewSetComplex(viewsets.ModelViewSet):
         return response.Response({"message"})
 
 
-class RekeningViewSet(KeuanganViewSetComplex):
+class RekeningViewSet(KeuanganBaseViewSet):
     serializer_class = RekeningSerializer
     permission_classes = [IsAuthenticated]
 
@@ -115,7 +115,7 @@ class RekeningViewSet(KeuanganViewSetComplex):
         return response.Response(TransferSerializer(transaksi, many=True).data, status=status.HTTP_200_OK)
 
 
-class TransaksiViewSet(KeuanganViewSetComplex):
+class TransaksiViewSet(KeuanganBaseViewSet):
     serializer_class = TransaksiSerializer
     permission_classes = [IsAuthenticated, NotTransferAndUtangPiutang]
 
@@ -137,7 +137,7 @@ class TransaksiViewSet(KeuanganViewSetComplex):
         return response.Response({"message": "Harap Tentukan jenis File Output"}, status.HTTP_400_BAD_REQUEST)
 
 
-class TransferViewSet(KeuanganViewSetComplex):
+class TransferViewSet(KeuanganBaseViewSet):
     serializer_class = TransferSerializer
     permission_classes = [IsAuthenticated]
 
@@ -145,7 +145,7 @@ class TransferViewSet(KeuanganViewSetComplex):
         super().__init__(model=Transfer, custom_order='-tgl_transfer', *args, **kwargs)
 
 
-class KategoriViewSet(KeuanganViewSetComplex):
+class KategoriViewSet(KeuanganBaseViewSet):
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated]
 
@@ -160,7 +160,7 @@ class KategoriViewSet(KeuanganViewSetComplex):
         )
 
 
-class UtangPiutangViewSet(KeuanganViewSetComplex):
+class UtangPiutangViewSet(KeuanganBaseViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = UtangPiutangSerializer
 

@@ -9,3 +9,4 @@ moneymanager.zip
 media/
 createFakeData.py
 backup/
+.env

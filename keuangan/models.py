@@ -76,18 +76,22 @@ class Transfer(models.Model):
     def __str__(self):
         return f"{self.from_account.name} --> {self.to_account.name} ({self.nominal})"
 
-# TODO:Tambahkan Planning & Limit Saldo Nantinya
-class Transaksi(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    pelaku = models.CharField(max_length=30, null=True, blank=True) #Penerima atau pemberi duit, bisa orang atau organisasi
+class TransaksiAbstract(models.Model):
     trc_name = models.CharField(max_length=100, null=False, blank=False)
+    kategori = models.ForeignKey(Kategori, on_delete=models.SET_NULL, null=True)
     price = models.PositiveBigIntegerField(null=False, blank=False,validators=[
         MinValueValidator(0)
     ])
+    class Meta:
+        abstract = True
+
+# TODO:Tambahkan Planning & Limit Saldo Nantinya
+class Transaksi(TransaksiAbstract):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    pelaku = models.CharField(max_length=30, null=True, blank=True) #Penerima atau pemberi duit, bisa orang atau organisasi
     rekening = models.ForeignKey(Rekening, on_delete=models.CASCADE)
     trc_type = models.IntegerField(choices=TIPE)
     trc_date = models.DateTimeField(default=timezone.now, null=False, blank=False)
-    kategori = models.ForeignKey(Kategori, on_delete=models.SET_NULL, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     id_utang_piutang = models.ForeignKey(UtangPiutang, on_delete=models.CASCADE, null=True)
     id_transfer = models.ForeignKey(Transfer,on_delete=models.CASCADE,null=True,blank=True)
